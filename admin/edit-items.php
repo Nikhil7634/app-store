@@ -128,11 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="category_name" class="form-label">Category Name</label>
         <input type="text" id="category_name" name="category_name" class="form-input" placeholder="Enter the category name" autocomplete="off" value="<?php echo htmlspecialchars($category['category_name']); ?>" required>
     </div>
-    
-    <div>
-        <label for="category_image" class="form-label">Category Image</label>
-        <input type="file" id="category_image" name="category_image" class="form-input">
-    </div>
+  
     
     <!-- Show Existing Image -->
     <?php if (!empty($category['category_image'])): ?>

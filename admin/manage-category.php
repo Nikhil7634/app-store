@@ -47,8 +47,7 @@ $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <table id="basicDataTable" class="table-auto border-collapse w-full whitespace-nowrap text-left text-gray-500 dark:text-dark-text font-medium">
                                     <thead>
                                         <tr>
-                                        <th class="p-6 py-4 bg-[#F2F4F9] dark:bg-dark-card-two dk-border-one">Images</th>
-                                            <th class="p-6 py-4 bg-[#F2F4F9] dark:bg-dark-card-two dk-border-one">Category Name</th>
+                                             <th class="p-6 py-4 bg-[#F2F4F9] dark:bg-dark-card-two dk-border-one">Category Name</th>
                                             <th class="p-6 py-4 bg-[#F2F4F9] dark:bg-dark-card-two dk-border-one w-10">Action</th>
                                         </tr>
                                     </thead>
@@ -56,11 +55,7 @@ $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <!-- Dynamic data will be inserted here -->
                                         <?php foreach ($categories as $category): ?>
                                             <tr class="transition-all duration-150 ease-linear [&.selected]:bg-[#F2F4F9] dark:[&.selected]:bg-dark-icon">
-                                            <td class="p-6 flex items-center py-3 group-[.bordered]:border dk-border-one group-[.bordered]:border-gray-200 dark:group-[.bordered]:border-dark-border sorting_1 capitalize">
-                                                    <a class="size-[70px] overflow-hidden">
-                                                        <img class="rounded-" src="uploads/categories/<?php echo htmlspecialchars($category['category_image']); ?>" alt="Wallpaper">
-                                                    </a>
-                                                </td>
+                                             
                                                 <td class="p-6 py-3 group-[.bordered]:border dk-border-one group-[.bordered]:border-gray-200 dark:group-[.bordered]:border-dark-border sorting_1 capitalize"><?php echo htmlspecialchars($category['category_name']); ?></td>
                                                 <td class="p-6 py-4 dk-border-one">
                                                     <div class="flex items-center gap-2">

@@ -1,4 +1,4 @@
-<?php
+ <?php
 session_start(); // Start the session
 
 // Include configuration
@@ -10,51 +10,29 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit(); // Stop further script execution
 }
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     $category_name = trim($_POST['category_name']);
-    $uploadDir = 'uploads/categories/'; // Directory where images will be saved
-    $imagePath = '';
 
-    if (!empty($category_name) && isset($_FILES['category_image'])) {
-        $image = $_FILES['category_image'];
-        $imageName = time() . '_' . basename($image['name']); // Unique file name
-        $imagePath = $uploadDir . $imageName;
+    if (!empty($category_name)) {
+        try {
+            // Insert category name into the database (no image)
+            $stmt = $dbh->prepare("INSERT INTO categories (category_name) VALUES (:category_name)");
+            $stmt->bindParam(':category_name', $category_name, PDO::PARAM_STR);
 
-        // Allowed file types
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!in_array($image['type'], $allowedTypes)) {
-            $error = "Only JPG, PNG, GIF, and WEBP images are allowed.";
-        } elseif ($image['size'] > 2 * 1024 * 1024) { // 2MB limit
-            $error = "Image size should not exceed 2MB.";
-        } else {
-            // Move uploaded file to the target directory
-            if (move_uploaded_file($image['tmp_name'], $imagePath)) {
-                try {
-                    // Insert category data into the database
-                    $stmt = $dbh->prepare("INSERT INTO categories (category_name, category_image) VALUES (:category_name, :category_image)");
-                    $stmt->bindParam(':category_name', $category_name, PDO::PARAM_STR);
-                    $stmt->bindParam(':category_image', $imageName, PDO::PARAM_STR);
-
-                    if ($stmt->execute()) {
-                        $msg = "Category added successfully.";
-                    } else {
-                        $error = "Error adding category.";
-                    }
-                } catch (PDOException $e) {
-                    $error = "Database error: " . $e->getMessage();
-                }
+            if ($stmt->execute()) {
+                $msg = "Category added successfully.";
             } else {
-                $error = "Failed to upload image.";
+                $error = "Error adding category.";
             }
+        } catch (PDOException $e) {
+            $error = "Database error: " . $e->getMessage();
         }
     } else {
-        $error = "Category name and image are required.";
+        $error = "Category name is required.";
     }
 }
-
-
 ?>
+
 
 
 <?php include 'includes/header.php'; ?>
@@ -111,11 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         <label for="category_name" class="form-label">Category Name</label>
         <input type="text" id="category_name" name="category_name" class="form-input" placeholder="Enter the category name" autocomplete="off" required>
     </div>
-    
-    <div>
-        <label for="category_image" class="form-label">Category Image</label>
-        <input type="file" id="category_image" name="category_image" class="form-input" accept="image/*" required>
-    </div>
+ 
 
     <button type="submit" name="submit" class="btn b-solid btn-primary-solid px-5 dk-theme-card-square">Add Category</button>
 </form>
