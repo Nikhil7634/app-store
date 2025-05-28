@@ -25,10 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $appVersion = $_POST['app_version'] ?? '';
     $imagePath = '';
     $screenshotPaths = [];
+    $apkPath = '';
 
     // Handle single image upload (main image)
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = 'uploads/';
+        $uploadDir = 'Uploads/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
@@ -64,12 +65,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Handle APK file upload
+    if (isset($_FILES['apk_file']) && $_FILES['apk_file']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = 'Uploads/apks/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $fileName = basename($_FILES['apk_file']['name']);
+        $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+        if (strtolower($fileExt) === 'apk') {
+            $targetPath = $uploadDir . uniqid() . '-' . $fileName;
+
+            if (move_uploaded_file($_FILES['apk_file']['tmp_name'], $targetPath)) {
+                $apkPath = $targetPath;
+            } else {
+                echo "Error uploading the APK file.";
+            }
+        } else {
+            echo "Error: Only .apk files are allowed.";
+        }
+    }
+
     // Convert screenshot paths to a comma-separated string
     $screenshots = !empty($screenshotPaths) ? implode(',', $screenshotPaths) : '';
 
     // Insert into database
-    $sql = "INSERT INTO allwallpaper (title, category_id, description, code_snippet, image_path, screenshots, app_rating, company_name, support_version, app_version) 
-            VALUES (:title, :category_id, :description, :code_snippet, :image_path, :screenshots, :app_rating, :company_name, :support_version, :app_version)";
+    $sql = "INSERT INTO allwallpaper (title, category_id, description, code_snippet, image_path, screenshots, app_rating, company_name, support_version, app_version, apk_path)
+            VALUES (:title, :category_id, :description, :code_snippet, :image_path, :screenshots, :app_rating, :company_name, :support_version, :app_version, :apk_path)";
     $stmt = $dbh->prepare($sql);
     $stmt->bindParam(':title', $title);
     $stmt->bindParam(':category_id', $categoryId);
@@ -81,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bindParam(':company_name', $companyName);
     $stmt->bindParam(':support_version', $supportVersion);
     $stmt->bindParam(':app_version', $appVersion);
+    $stmt->bindParam(':apk_path', $apkPath);
 
     if ($stmt->execute()) {
         $msg = "Game details added successfully!";
@@ -100,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="grid grid-cols-12 gap-x-4">
             <div class="col-span-full lg:col-span-7 card">
                 <div class="p-1.5">
-                    <h6 class="card-title">Add Game Details</h6>
+                    <h6 class="card-title">Add App Details</h6>
 
                     <?php if (isset($msg)) : ?>
                         <div class="aleart aleart-success-light rounded-full mt-4">
@@ -114,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <i class="ri-close-line text-inherit"></i>
                             </button>
                         </div>
-                     <?php endif; ?>
+                    <?php endif; ?>
                     <?php if (isset($error)) : ?>
                         <div class="aleart aleart-danger-light rounded-full mt-4">
                             <div class="flex-center gap-2.5">
@@ -127,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <i class="ri-close-line text-inherit"></i>
                             </button>
                         </div>
-                     <?php endif; ?>
+                    <?php endif; ?>
                     <div class="mt-7 pt-0.5">
                         <div class="grid grid-cols-2 gap-x-4 gap-y-5">
                             <div class="col-span-full xl:col-auto leading-none">
@@ -135,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="text" id="courseTitle" name="title" placeholder="Title" class="form-input" required>
                             </div>
                             <div class="col-span-full xl:col-auto leading-none">
-                                <label class="form-label">Game Category</label>
+                                <label class="form-label">App Category</label>
                                 <select class="singleSelect" name="category" required>
                                     <?php foreach ($categories as $category): ?>
                                         <option value="<?php echo htmlspecialchars($category['id']); ?>">
@@ -174,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="col-span-full lg:col-span-5 card">
                 <div class="p-1.5">
-                    <h6 class="card-title">Add Images</h6>
+                    <h6 class="card-title">Add Images and APK</h6>
                     <div class="mt-7 pt-0.5 flex flex-col gap-5">
                         <div class="col-span-full sm:col-span-4">
                             <p class="text-xs text-gray-500 dark:text-dark-text leading-none font-semibold mb-3">App Icon</p>
@@ -205,6 +229,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <button type="button" id="add-screenshot" class="btn b-solid btn-primary-solid btn-sm dk-theme-card-square mt-3">Add Another Screenshot</button>
                         </div>
+                        <div class="col-span-full sm:col-span-4">
+                            <p class="text-xs text-gray-500 dark:text-dark-text leading-none font-semibold mb-3">APK File</p>
+                            <label for="apkfile" class="file-container ac-bg text-xs leading-none font-semibold mb-3 cursor-pointer aspect-[4/1.5] flex flex-col items-center justify-center gap-2.5 border border-dashed border-gray-900 dark:border-dark-border rounded-10 dk-theme-card-square">
+                                <input type="file" id="apkfile" name="apk_file" hidden class="img-src peer/file" accept=".apk" onchange="displayFileName(this, 'apk-file-name')">
+                                <span class="flex-center flex-col peer-[.uploaded]/file:hidden">
+                                    <span class="size-10 md:size-15 flex-center bg-primary-200 dark:bg-dark-icon rounded-50 dk-theme-card-square">
+                                        <img src="assets/images/icons/upload-file.svg" alt="icon" class="dark:brightness-200 dark:contrast-100 w-1/2 sm:w-auto">
+                                    </span>
+                                    <span class="mt-2 text-gray-500 dark:text-dark-text">Choose APK file</span>
+                                </span>
+                            </label>
+                            <div id="apk-file-name" class="mt-3 text-gray-500 dark:text-dark-text"></div>
+                        </div>
                         <div class="flex-center !justify-end">
                             <button type="submit" class="btn b-solid btn-primary-solid btn-lg dk-theme-card-square">Upload</button>
                         </div>
@@ -215,7 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 </div>
 
-<script data-cfasync="false" src="../../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 <script src="assets/js/vendor/jquery.min.js"></script>
 <script src="assets/js/vendor/select/select2.min.js"></script>
 <script src="assets/js/vendor/summernote.min.js"></script>
@@ -241,6 +278,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 previewContainer.appendChild(img);
             };
             reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Function to display APK file name
+    function displayFileName(input, displayId) {
+        const displayContainer = document.getElementById(displayId);
+        displayContainer.innerHTML = ''; // Clear previous content
+
+        if (input.files && input.files[0]) {
+            const fileName = input.files[0].name;
+            const span = document.createElement('span');
+            span.textContent = `Selected file: ${fileName}`;
+            displayContainer.appendChild(span);
         }
     }
 

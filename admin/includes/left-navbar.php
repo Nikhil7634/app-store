@@ -49,7 +49,7 @@
                             <i class="fa-solid fa-plus"></i>
                             </span>
                             <span class="group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=sm]:ml-6 group-data-[sidebar-size=sm]:group-hover/sm:block ml-3 shrink-0">
-                                Add Game
+                                Add App
                             </span>
                         </a>
                          

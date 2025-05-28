@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $supportVersion = $_POST['support_version'] ?? '';
     $appVersion = $_POST['app_version'] ?? '';
     $imagePath = $wallpaper['image_path']; // Keep existing image if not updated
+    $apkPath = $wallpaper['apk_path'] ?? ''; // Keep existing APK if not updated
     $screenshotPaths = []; // Initialize empty array for screenshots
 
     // Get retained existing screenshots from hidden input
@@ -81,13 +82,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Main image upload error: " . $_FILES['image']['error'];
     }
 
-    // Debug: Inspect $_FILES['screenshots']
-    // Uncomment to debug
-    /*
-    echo "<pre>";
-    print_r($_FILES['screenshots']);
-    echo "</pre>";
-    */
+    // Handle APK file upload
+    if (isset($_FILES['apk_file']) && $_FILES['apk_file']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = 'Uploads/apks/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $fileName = basename($_FILES['apk_file']['name']);
+        $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+        $maxFileSize = 100 * 1024 * 1024; // 100MB
+        if (strtolower($fileExt) === 'apk' && $_FILES['apk_file']['size'] <= $maxFileSize) {
+            $targetPath = $uploadDir . uniqid() . '-' . $fileName;
+
+            if (move_uploaded_file($_FILES['apk_file']['tmp_name'], $targetPath)) {
+                $apkPath = $targetPath;
+                // Delete old APK if it exists and is being replaced
+                if (!empty($wallpaper['apk_path']) && file_exists($wallpaper['apk_path'])) {
+                    unlink($wallpaper['apk_path']);
+                }
+            } else {
+                $error = "Error uploading the APK file. Check directory permissions.";
+            }
+        } else {
+            $error = "Invalid file type or size for APK file. Only .apk files allowed, max size: 100MB.";
+        }
+    } elseif (isset($_FILES['apk_file']) && $_FILES['apk_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $error = "APK file upload error: " . $_FILES['apk_file']['error'];
+    }
 
     // Handle multiple screenshot uploads
     if (isset($_FILES['screenshots']) && is_array($_FILES['screenshots']['name'])) {
@@ -142,7 +164,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             app_rating = :app_rating, 
             company_name = :company_name, 
             support_version = :support_version, 
-            app_version = :app_version 
+            app_version = :app_version, 
+            apk_path = :apk_path 
             WHERE id = :id";
             
     $stmt = $dbh->prepare($sql);
@@ -156,6 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bindParam(':company_name', $companyName);
     $stmt->bindParam(':support_version', $supportVersion);
     $stmt->bindParam(':app_version', $appVersion);
+    $stmt->bindParam(':apk_path', $apkPath);
     $stmt->bindParam(':id', $wallpaperId);
 
     if ($stmt->execute()) {
@@ -257,7 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="col-span-full lg:col-span-5 card">
                 <div class="p-1.5">
-                    <h6 class="card-title">Change Images</h6>
+                    <h6 class="card-title">Change Images and APK</h6>
                     <div class="mt-7 pt-0.5 flex flex-col gap-5">
                         <div class="col-span-full sm:col-span-4">
                             <p class="text-xs text-gray-500 dark:text-dark-text leading-none font-semibold mb-3">Main Image</p>
@@ -316,6 +340,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <button type="button" id="add-screenshot" class="btn b-solid btn-primary-solid btn-sm dk-theme-card-square mt-3">Add Another Screenshot</button>
                         </div>
+                        <div class="col-span-full sm:col-span-4">
+                            <p class="text-xs text-gray-500 dark:text-dark-text leading-none font-semibold mb-3">APK File</p>
+                            <label for="apkfile" class="file-container ac-bg text-xs leading-none font-semibold mb-3 cursor-pointer aspect-[4/1.5] flex flex-col items-center justify-center gap-2.5 border border-dashed border-gray-900 dark:border-dark-border rounded-10 dk-theme-card-square">
+                                <input type="file" id="apkfile" name="apk_file" hidden class="img-src peer/file" accept=".apk" onchange="displayFileName(this, 'apk-file-name')">
+                                <span class="flex-center flex-col peer-[.uploaded]/file:hidden">
+                                    <span class="size-10 md:size-15 flex-center bg-primary-200 dark:bg-dark-icon rounded-50 dk-theme-card-square">
+                                        <img src="assets/images/icons/upload-file.svg" alt="icon" class="dark:brightness-200 dark:contrast-100 w-1/2 sm:w-auto">
+                                    </span>
+                                    <span class="mt-2 text-gray-500 dark:text-dark-text">Choose APK file</span>
+                                </span>
+                            </label>
+                            <div id="apk-file-name" class="mt-3 text-gray-500 dark:text-dark-text">
+                                <?php if (!empty($wallpaper['apk_path'])): ?>
+                                    <span>Current file: <?php echo htmlspecialchars(basename($wallpaper['apk_path'])); ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                         <div class="flex-center !justify-end">
                             <button type="submit" class="btn b-solid btn-primary-solid btn-lg dk-theme-card-square">Update</button>
                         </div>
@@ -326,7 +367,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 </div>
 
-<script data-cfasync="false" src="../../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 <script src="assets/js/vendor/jquery.min.js"></script>
 <script src="assets/js/vendor/select/select2.min.js"></script>
 <script src="assets/js/vendor/summernote.min.js"></script>
@@ -373,6 +414,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             };
             reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Function to display APK file name
+    function displayFileName(input, displayId) {
+        const displayContainer = document.getElementById(displayId);
+        displayContainer.innerHTML = ''; // Clear previous content
+
+        if (input.files && input.files[0]) {
+            const fileName = input.files[0].name;
+            const span = document.createElement('span');
+            span.textContent = `Selected file: ${fileName}`;
+            displayContainer.appendChild(span);
         }
     }
 
@@ -430,9 +484,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         newInput.setAttribute('accept', 'image/*');
 
         const span = document.createElement('span');
-        span.className = 'flex-center flex-col peer-[.uploaded]/file:';
+        span.className = 'flex-center flex-col peer-[.uploaded]/file:hidden';
         span.innerHTML = `
-            <span class="size-10 md:size-15 flex-center bg-primary-200 dark:bg-dark-icon rounded-full dk-theme-card-square">
+            <span class="size-10 md:size-15 flex-center bg-primary-200 dark:bg-dark-icon rounded-50 dk-theme-card-square">
                 <img src="assets/images/icons/upload-file.svg" alt="icon" class="dark:brightness-200 dark:contrast-100 w-1/2 sm:w-auto">
             </span>
             <span class="mt-2 text-gray-500 dark:text-dark-text">Choose screenshot</span>
