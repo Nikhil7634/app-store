@@ -484,7 +484,18 @@ try {
               <?php endforeach; ?>
           </div>
         </div>
+
+        <div class="aegon module right_apkpure" dt-eid="card" dt-params="model_type=1032&amp;module_name=apkpure_app&amp;position=3" dt-clck-ignore="true" dt-imp-once="true" dt-imp-end-ignore="true" dt-send-beacon="true">
+           
+           <a class="how-to" title="How to install XAPK / APK file" href="https://apkpure.com/how-to/how-to-install-xapk-apk" rel="noopener" target="_blank" dt-eid="download_button" dt-params="small_position=1&amp;module_name=download_button&amp;package_name=com.apkpure.aegon&amp;channel_id=&amp;link_url=https%3A%2F%2Fapkpure.com%2Fhow-to%2Fhow-to-install-xapk-apk" dt-imp-once="true" dt-imp-end-ignore="true" dt-send-beacon="true">How to install XAPK / APK file</a>
+          <div class="social-network"><a href="https://t.me/apkpurechannel" title="Telegram" class="network telegram" rel="nofollow noopener" target="_blank" dt-eid="share" dt-params="small_position=14&amp;name=Telegram" dt-imp-once="true" dt-imp-end-ignore="true" dt-send-beacon="true"><span>Telegram</span></a><a href="https://www.instagram.com/theofficialapkpure/" title="Instagram" class="network in" rel="nofollow noopener" target="_blank" dt-eid="share" dt-params="small_position=15&amp;name=Instagram" dt-imp-once="true" dt-imp-end-ignore="true" dt-send-beacon="true"><span>Instagram</span></a><a href="https://twitter.com/apkpure" title="Twitter X" class="network tw" rel="nofollow noopener" target="_blank" dt-eid="share" dt-params="small_position=16&amp;name=Twitter%20X" dt-imp-once="true" dt-imp-end-ignore="true" dt-send-beacon="true"><span>Twitter X</span></a><a href="https://www.youtube.com/channel/UCbCOKdnt1yYk4S3I4a034XQ" title="YouTube" class="network glp" rel="nofollow noopener" target="_blank" dt-eid="share" dt-params="small_position=17&amp;name=YouTube" dt-imp-once="true" dt-imp-end-ignore="true" dt-send-beacon="true"><span>YouTube</span></a></div>
+        </div>
+
+
         
+
+
+
       </div>
       <div class="left">
       
